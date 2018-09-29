@@ -3,7 +3,7 @@ import org.pcap4j.core.PcapNetworkInterface;
 import javax.swing.*;
 import java.awt.*;
 
-public class InterfacesLIstCellRenderer extends DefaultListCellRenderer {
+public class InterfaceListCellRenderer extends DefaultListCellRenderer {
     @Override
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
 

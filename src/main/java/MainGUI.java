@@ -93,7 +93,7 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
         basicPanel.add(new JLabel("Interface: "));
 
         interfacesCB = new JComboBox<>();
-        interfacesCB.setRenderer(new InterfacesLIstCellRenderer());
+        interfacesCB.setRenderer(new InterfaceListCellRenderer());
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 50;
