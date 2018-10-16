@@ -1,4 +1,4 @@
-import org.pcap4j.core.PcapNetworkInterface;
+import org.pcap4j.core.*;
 import org.pcap4j.packet.IpV4Packet;
 import org.pcap4j.packet.Packet;
 import org.pcap4j.packet.TcpPacket;
@@ -7,10 +7,12 @@ import org.pcap4j.packet.UdpPacket;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 
@@ -44,6 +46,7 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
 
     private PacketSniffer packetSniffer;
     private InfoComponent infoComponent;
+    private JFileChooser fileChooser;
 
     private static final String[] columnNames = {
             "Time", "Source IP", "Destination IP", "Protocol", "Src Port", "Dst Port"
@@ -54,7 +57,7 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
     private JButton startStopBT;
     private JTable infoTB;
     private DefaultTableModel infoTM;
-    private ArrayList<Packet> packets;
+    private ArrayList<PacketHandle> packets;
 
     private boolean isCapturing;
     private Thread sniffLoop;
@@ -78,7 +81,27 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
 
+        JMenuItem clearItem = new JMenuItem("Clear");
+        clearItem.setAccelerator(KeyStroke.getKeyStroke("ctrl R"));
+        clearItem.addActionListener(event -> clearCapturedPackets());
+        fileMenu.add(clearItem);
+
+        fileMenu.addSeparator();
+
+        JMenuItem saveItem = new JMenuItem("Save");
+        saveItem.setAccelerator(KeyStroke.getKeyStroke("ctrl S"));
+        saveItem.addActionListener(event -> saveCapturedPackets());
+        fileMenu.add(saveItem);
+
+        JMenuItem loadItem = new JMenuItem("Load");
+        loadItem.setAccelerator(KeyStroke.getKeyStroke("ctrl O"));
+        loadItem.addActionListener(event -> loadCapturedPackets());
+        fileMenu.add(loadItem);
+
+        fileMenu.addSeparator();
+
         JMenuItem exitItem = new JMenuItem("Exit");
+        exitItem.setAccelerator(KeyStroke.getKeyStroke("ctrl X"));
         exitItem.addActionListener(event -> shouldClose());
         fileMenu.add(exitItem);
 
@@ -147,10 +170,12 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 int selectedRow = infoTB.getSelectedRow();
-                if (selectedRow == prevSelectedRow)
-                    return;
-                infoComponent.setPacketInfo(packets.get(selectedRow));
+                if (selectedRow == prevSelectedRow) return;
+
                 prevSelectedRow = selectedRow;
+                if (selectedRow == -1) return;
+
+                infoComponent.setPacketInfo(packets.get(selectedRow).getPacket());
             }
         });
 
@@ -165,6 +190,21 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
 
         packetSniffer = new PacketSniffer();
         packetSniffer.addPacketSnifferListener(this);
+
+
+        fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(new File("."));
+        fileChooser.setFileFilter(new FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                return f.isDirectory() || f.getName().endsWith(".dump");
+            }
+
+            @Override
+            public String getDescription() {
+                return "tcp dump";
+            }
+        });
     }
 
     public void shouldClose() {
@@ -207,6 +247,7 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
 
         packets.clear();
         infoTM.setRowCount(0);
+        infoComponent.clear();
 
         // Sniff loop on a separate thread to prevent EDT from blocking
         sniffLoop = new Thread( () -> {
@@ -254,7 +295,47 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
         }
 
         infoTM.addRow(new String[] {time, srcAddr, dstAddr, protocol, srcPort, dstPort});
-        packets.add(packet);
+        packets.add(new PacketHandle(packet, timestamp));
+    }
+
+    void clearCapturedPackets() {
+        infoTB.clearSelection();
+        infoTM.setRowCount(0);
+        packets.clear();
+        infoComponent.clear();
+    }
+
+    void loadCapturedPackets() {
+        if (isCapturing) {
+            int result = JOptionPane.showConfirmDialog(this,
+                    "Packet Capturing is in progress\nDiscard current session?",
+                    "Capture In Progress", JOptionPane.WARNING_MESSAGE);
+            if (result != JOptionPane.OK_OPTION)
+                return;
+        }
+        int result = fileChooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            //TODO load dump
+        }
+    }
+
+    void saveCapturedPackets() {
+        if (isCapturing) {
+            int result = JOptionPane.showConfirmDialog(this,
+                    "New packets will not be saved\nContinue?",
+                    "Capture in progress", JOptionPane.WARNING_MESSAGE);
+            if (result != JOptionPane.OK_OPTION)
+                return;
+        }
+        if (packets.size() == 0) {
+            JOptionPane.showMessageDialog(this, "Nothing to save", "No Packets", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int result = fileChooser.showSaveDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+
+        }
     }
 }
 
@@ -301,6 +382,12 @@ class InfoComponent extends JTabbedPane {
     protected void setPayloadInfo(Packet packet) {
         String hex = javax.xml.bind.DatatypeConverter.printHexBinary(packet.getRawData());
         payloadArea.setText(hex);
+    }
+
+    public void clear() {
+        ethInfoArea.setText("");
+        ipInfoArea.setText("");
+        payloadArea.setText("");
     }
 
     @Override

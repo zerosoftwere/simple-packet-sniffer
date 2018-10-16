@@ -60,6 +60,10 @@ public class PacketSniffer {
         //TODO: Should return packet statistics ;)
     }
 
+    public PcapHandle getHandle() {
+        return this.handle;
+    }
+
     public void addPacketSnifferListener(PacketSnifferListener listener) {
         this.sniffers.add(listener);
     }
