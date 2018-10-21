@@ -1,9 +1,10 @@
 import org.pcap4j.core.*;
+import org.pcap4j.packet.Packet;
+import org.pcap4j.packet.namednumber.DataLinkType;
 
+import javax.activity.InvalidActivityException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class PacketSniffer {
     public static final int MAX_PACKET = 10_000;
@@ -33,6 +34,27 @@ public class PacketSniffer {
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
     }
 
+    void openOffline(String filename)  throws InvalidActivityException, PcapNativeException,
+            NotOpenException, InterruptedException {
+        if (handle != null && handle.isOpen()) throw
+                new InvalidActivityException("Handle is opened");
+
+        handle = Pcaps.openOffline(filename);
+        startCapture();
+        stopCapture();
+    }
+
+    void dumpPackets(ArrayList<PacketHandle> packets, String filename) throws PcapNativeException, NotOpenException {
+        try (PcapHandle dumpHandle = Pcaps.openDead(DataLinkType.EN10MB, 65536)) {
+            PcapDumper dumper = dumpHandle.dumpOpen(filename);
+            for (PacketHandle packetHandle : packets) {
+                dumper.dump(packetHandle.getPacket(), packetHandle.getTimestamp());
+            }
+        } catch (NotOpenException ex) {
+            ex.printStackTrace();
+        }
+    }
+
     public void startCapture() throws InterruptedException, NotOpenException, PcapNativeException {
         // Create a listener that defines what to do with the received packets
         PacketListener listener = (packet) -> {
@@ -58,10 +80,6 @@ public class PacketSniffer {
     public void getStatus() throws PcapNativeException, NotOpenException {
         PcapStat stats = handle.getStats();
         //TODO: Should return packet statistics ;)
-    }
-
-    public PcapHandle getHandle() {
-        return this.handle;
     }
 
     public void addPacketSnifferListener(PacketSnifferListener listener) {

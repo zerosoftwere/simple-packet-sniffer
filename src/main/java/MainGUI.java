@@ -88,13 +88,13 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
 
         fileMenu.addSeparator();
 
-        JMenuItem saveItem = new JMenuItem("Save");
-        saveItem.setAccelerator(KeyStroke.getKeyStroke("ctrl S"));
+        JMenuItem saveItem = new JMenuItem("Dump");
+        saveItem.setAccelerator(KeyStroke.getKeyStroke("ctrl D"));
         saveItem.addActionListener(event -> saveCapturedPackets());
         fileMenu.add(saveItem);
 
         JMenuItem loadItem = new JMenuItem("Load");
-        loadItem.setAccelerator(KeyStroke.getKeyStroke("ctrl O"));
+        loadItem.setAccelerator(KeyStroke.getKeyStroke("ctrl L"));
         loadItem.addActionListener(event -> loadCapturedPackets());
         fileMenu.add(loadItem);
 
@@ -197,12 +197,12 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
         fileChooser.setFileFilter(new FileFilter() {
             @Override
             public boolean accept(File f) {
-                return f.isDirectory() || f.getName().endsWith(".dump");
+                return f.isDirectory() || f.getName().endsWith(".pcap");
             }
 
             @Override
             public String getDescription() {
-                return "tcp dump";
+                return "pcap dump";
             }
         });
     }
@@ -245,9 +245,7 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
         filterTF.setEnabled(false);
         startStopBT.setText("Stop ");
 
-        packets.clear();
-        infoTM.setRowCount(0);
-        infoComponent.clear();
+        clearCapturedPackets();
 
         // Sniff loop on a separate thread to prevent EDT from blocking
         sniffLoop = new Thread( () -> {
@@ -313,9 +311,19 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
             if (result != JOptionPane.OK_OPTION)
                 return;
         }
+
+        stopCapturing();
+        clearCapturedPackets();
+
+        fileChooser.setSelectedFile(new File(""));
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
-            //TODO load dump
+            try {
+                String filename = fileChooser.getSelectedFile().getAbsolutePath();
+                packetSniffer.openOffline(filename);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex);
+            }
         }
     }
 
@@ -332,9 +340,17 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
             return;
         }
 
+        fileChooser.setSelectedFile(new File("untitled.pcap"));
         int result = fileChooser.showSaveDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
+            try {
+                String filename = fileChooser.getSelectedFile().getAbsolutePath();
+                if (!filename.endsWith("pcap")) filename.concat(".pcap");
 
+                packetSniffer.dumpPackets(packets, filename);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex);
+            }
         }
     }
 }
