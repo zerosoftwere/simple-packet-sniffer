@@ -90,12 +90,12 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
         fileMenu.addSeparator();
 
         JMenuItem saveItem = new JMenuItem("Dump");
-        saveItem.setAccelerator(KeyStroke.getKeyStroke("ctrl D"));
+        saveItem.setAccelerator(KeyStroke.getKeyStroke("ctrl S"));
         saveItem.addActionListener(event -> saveCapturedPackets());
         fileMenu.add(saveItem);
 
         JMenuItem loadItem = new JMenuItem("Load");
-        loadItem.setAccelerator(KeyStroke.getKeyStroke("ctrl L"));
+        loadItem.setAccelerator(KeyStroke.getKeyStroke("ctrl O"));
         loadItem.addActionListener(event -> loadCapturedPackets());
         fileMenu.add(loadItem);
 
