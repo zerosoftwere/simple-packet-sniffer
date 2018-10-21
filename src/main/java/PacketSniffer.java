@@ -3,6 +3,7 @@ import org.pcap4j.packet.Packet;
 import org.pcap4j.packet.namednumber.DataLinkType;
 
 import javax.activity.InvalidActivityException;
+import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,10 +35,10 @@ public class PacketSniffer {
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
     }
 
-    void openOffline(String filename)  throws InvalidActivityException, PcapNativeException,
+    void openOffline(String filename)  throws OperationNotSupportedException, PcapNativeException,
             NotOpenException, InterruptedException {
         if (handle != null && handle.isOpen()) throw
-                new InvalidActivityException("Handle is opened");
+                new OperationNotSupportedException("Handle is opened");
 
         handle = Pcaps.openOffline(filename);
         startCapture();
