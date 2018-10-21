@@ -1,3 +1,4 @@
+import org.apache.commons.codec.binary.Hex;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.IpV4Packet;
 import org.pcap4j.packet.Packet;
@@ -396,7 +397,7 @@ class InfoComponent extends JTabbedPane {
     }
 
     protected void setPayloadInfo(Packet packet) {
-        String hex = javax.xml.bind.DatatypeConverter.printHexBinary(packet.getRawData());
+        String hex = Hex.encodeHexString(packet.getRawData());
         payloadArea.setText(hex);
     }
 
