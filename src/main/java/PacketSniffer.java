@@ -66,7 +66,7 @@ public class PacketSniffer {
     }
 
     public void stopCapture() {
-        if (!handle.isOpen()) {
+        if (handle == null || !handle.isOpen()) {
             return;
         }
 
