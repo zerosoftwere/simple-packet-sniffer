@@ -13,6 +13,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.print.PrinterException;
 import java.io.File;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -98,6 +99,13 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
         loadItem.setAccelerator(KeyStroke.getKeyStroke("ctrl O"));
         loadItem.addActionListener(event -> loadCapturedPackets());
         fileMenu.add(loadItem);
+
+        fileMenu.addSeparator();
+
+        JMenuItem printItem = new JMenuItem("print");
+        printItem.setAccelerator(KeyStroke.getKeyStroke("ctrl P"));
+        printItem.addActionListener(event -> printCapturedPackets());
+        fileMenu.add(printItem);
 
         fileMenu.addSeparator();
 
@@ -208,7 +216,7 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
         });
     }
 
-    public void shouldClose() {
+    protected void shouldClose() {
         // Might accidentally clicked the X button?
         int result = JOptionPane.showConfirmDialog(
                 SniffGUI.this, "Exit PacketSniffer?",
@@ -222,7 +230,7 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
         }
     }
 
-    public void stopCapturing() {
+    protected void stopCapturing() {
         // Enable Controls on capture stop.
         interfacesCB.setEnabled(true);
         filterTF.setEnabled(true);
@@ -232,7 +240,7 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
         packetSniffer.stopCapture();
     }
 
-    public void startCapturing() {
+    protected void startCapturing() {
         // Disable certain controls on capture start
         String filter  = filterTF.getText();
         PcapNetworkInterface device = (PcapNetworkInterface) interfacesCB.getSelectedItem();
@@ -297,14 +305,14 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
         packets.add(new PacketHandle(packet, timestamp));
     }
 
-    void clearCapturedPackets() {
+    protected void clearCapturedPackets() {
         infoTB.clearSelection();
         infoTM.setRowCount(0);
         packets.clear();
         infoComponent.clear();
     }
 
-    void loadCapturedPackets() {
+    protected void loadCapturedPackets() {
         if (isCapturing) {
             int result = JOptionPane.showConfirmDialog(this,
                     "Packet Capturing is in progress\nDiscard current session?",
@@ -328,7 +336,7 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
         }
     }
 
-    void saveCapturedPackets() {
+    protected void saveCapturedPackets() {
         if (isCapturing) {
             int result = JOptionPane.showConfirmDialog(this,
                     "New packets will not be saved\nContinue?",
@@ -352,6 +360,14 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, ex);
             }
+        }
+    }
+
+    protected void printCapturedPackets() {
+        try {
+            infoTB.print();
+        } catch (PrinterException ex) {
+            JOptionPane.showMessageDialog(this, ex);
         }
     }
 }
