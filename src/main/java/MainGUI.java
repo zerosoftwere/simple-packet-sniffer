@@ -102,7 +102,7 @@ class SniffGUI extends JFrame implements PacketSnifferListener {
 
         fileMenu.addSeparator();
 
-        JMenuItem printItem = new JMenuItem("print");
+        JMenuItem printItem = new JMenuItem("Print");
         printItem.setAccelerator(KeyStroke.getKeyStroke("ctrl P"));
         printItem.addActionListener(event -> printCapturedPackets());
         fileMenu.add(printItem);
